@@ -130,11 +130,15 @@ class quicksand:
         return [separator+e for e in item.split(separator) if e]
 
 
-    def scan_exploit(self, item, loc):
+    def scan_exploit(self, item, loc, checked = []):
         matches = self.exploitrules.match(data=item)
 
         if matches:
             for m in matches:
+                if m.rule in checked:
+                    continue
+                else:
+                    checked.append(m.rule)
                 rtype = "exploit"
                 desc = ""
                 mitre = ""
@@ -673,7 +677,8 @@ class quicksand:
 
 
     def analyse_ole(self, doc, loc):
-        quicksand.scan_exploit(self, doc,loc)
+        checked = []
+        quicksand.scan_exploit(self, doc,loc,checked)
         quicksand.scan_exec(self, doc,loc)
         hwp = False
         if b'HWP Document' in doc:
@@ -838,7 +843,7 @@ class quicksand:
                         except:
                             None
                         #quicksand.msg (self,"scanning ole object")
-                        quicksand.scan_exploit(self, s,myloc)
+                        quicksand.scan_exploit(self, s,myloc,checked)
                         quicksand.scan_exec(self, s,myloc)
                         if self.capture:
                             #quicksand.msg(self, "capture ole stream")
@@ -849,7 +854,7 @@ class quicksand:
                             macro = self.dobiff(name0, s)
                             if len(macro) > 1:
                                 macro_text = bytes("\n".join(macro), 'utf8')
-                                quicksand.scan_exploit(self, macro_text,str(myloc) + "-biff")
+                                quicksand.scan_exploit(self, macro_text,str(myloc) + "-biff",checked)
                                 if self.capture:
                                     self.results['streams'][str(myloc)+ "-biff"] =  macro_text
 
@@ -883,6 +888,7 @@ class quicksand:
                 else:
                     if self.capture:
                         self.results['streams'][str(loc) + "-openxml" + str(i)] =  elements[i]
+
                     
 
     def metadata(self):
